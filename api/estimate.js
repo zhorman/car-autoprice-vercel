@@ -1,35 +1,37 @@
 // api/estimate.js
 
-// --- 1. Import dependencies using ESM 'import' syntax ---
+// --- 1. Импортируем зависимости, используя синтаксис ESM 'import' ---
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import OpenAI from 'openai';
 
-// --- 2. Initialize and configure ---
+// --- 2. Инициализация и настройка ---
 const app = express();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- 3. Configure CORS ---
+// --- 3. Настройка CORS ---
 app.use(cors());
 
-// --- 4. Configure Multer ---
+// --- 4. Настройка Multer ---
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// --- 5. The API endpoint (logic remains the same) ---
+// --- 5. Эндпоинт API (логика остаётся прежней) ---
 app.post('/api/estimate', upload.single('image'), async (req, res) => {
   try {
     const imageFile = req.file;
     const textDescription = req.body.text;
 
     if (!imageFile || !textDescription) {
-      return res.status(400).json({ error: 'Image and text are required.' });
+      return res
+        .status(400)
+        .json({ error: 'Изображение и текст обязательны.' });
     }
 
     const imageBase64 = imageFile.buffer.toString('base64');
@@ -43,7 +45,7 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
           content: [
             {
               type: 'text',
-              text: `You are an expert auto repair estimator. Based on the image and description, estimate the standard labor hours required for the repair. Client's description: "${textDescription}". Your response MUST be in JSON format with two fields: "estimatedHours" (a number or a string with a number) and "comment" (a brief text commentary on the necessary work).`,
+              text: `Ты — опытный оценщик стоимости ремонта автомобилей. На основе изображения и описания, оцени, сколько нормочасов потребуется на ремонт. Описание от клиента: "${textDescription}". Твой ответ ДОЛЖЕН быть в формате JSON с двумя полями: "estimatedHours" (число или строка с числом) и "comment" (краткий текстовый комментарий о необходимых работах).`,
             },
             {
               type: 'image_url',
@@ -64,18 +66,19 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
       return res
         .status(500)
         .json({
-          error: 'The AI could not process the image due to safety policies.',
+          error:
+            'AI не смог обработать изображение из-за политики безопасности.',
         });
     }
 
     const aiResponseJson = JSON.parse(aiResponseContent);
     res.status(200).json(aiResponseJson);
   } catch (error) {
-    console.error('❌ Error in /api/estimate function:', error);
-    res.status(500).json({ error: 'Internal server error.' });
+    console.error('❌ Ошибка в функции /api/estimate:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера.' });
   }
 });
 
-// --- 6. EXPORT THE APP ---
-// Use 'export default' instead of 'module.exports'
+// --- 6. ЭКСПОРТИРУЕМ ПРИЛОЖЕНИЕ ---
+// Используем 'export default' вместо 'module.exports'
 export default app;
