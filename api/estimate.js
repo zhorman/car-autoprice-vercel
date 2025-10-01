@@ -1,51 +1,37 @@
 // api/estimate.js
 
-// --- 1. Импорт зависимостей ---
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const OpenAI = require('openai');
-// 'dotenv' не нужен на Vercel, он использует переменные из своего дашборда
+// --- 1. Import dependencies using ESM 'import' syntax ---
+import express from 'express';
+import cors from 'cors';
+import multer from 'multer';
+import OpenAI from 'openai';
 
-// --- 2. Инициализация и настройка ---
+// --- 2. Initialize and configure ---
 const app = express();
-// 'port' не нужен, Vercel управляет этим сам
 
-// Настраиваем клиент OpenAI с API-ключом
-// Vercel автоматически подставит переменные окружения из настроек проекта
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- 3. Настройка CORS ---
-// Разрешаем запросы со всех источников, так как Vercel сам управляет безопасностью
-// между фронтендом и API на одном домене.
+// --- 3. Configure CORS ---
 app.use(cors());
 
-// --- 4. Настройка Multer (без изменений) ---
+// --- 4. Configure Multer ---
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// --- 5. Основной API-эндпоинт ---
-// ВАЖНО: Путь должен быть полным, так как Vercel будет вызывать этот файл напрямую
+// --- 5. The API endpoint (logic remains the same) ---
 app.post('/api/estimate', upload.single('image'), async (req, res) => {
-  //
-  // ... ВСЯ ВАША ЛОГИКА ВНУТРИ ОСТАЕТСЯ ТОЧНО ТАКОЙ ЖЕ ...
-  // (от try { ... } до catch { ... })
-  //
   try {
     const imageFile = req.file;
     const textDescription = req.body.text;
 
     if (!imageFile || !textDescription) {
-      return res
-        .status(400)
-        .json({ error: 'Изображение и текст обязательны.' });
+      return res.status(400).json({ error: 'Image and text are required.' });
     }
 
-    // ... остальная логика запроса к OpenAI ...
     const imageBase64 = imageFile.buffer.toString('base64');
     const imageMimeType = imageFile.mimetype;
 
@@ -57,7 +43,7 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
           content: [
             {
               type: 'text',
-              text: `Ты — опытный оценщик... Твой ответ должен быть СТРОГО в формате JSON...`,
+              text: `You are an expert auto repair estimator. Based on the image and description, estimate the standard labor hours required for the repair. Client's description: "${textDescription}". Your response MUST be in JSON format with two fields: "estimatedHours" (a number or a string with a number) and "comment" (a brief text commentary on the necessary work).`,
             },
             {
               type: 'image_url',
@@ -77,18 +63,19 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
     if (aiResponseContent === null) {
       return res
         .status(500)
-        .json({ error: 'AI не смог обработать изображение.' });
+        .json({
+          error: 'The AI could not process the image due to safety policies.',
+        });
     }
 
     const aiResponseJson = JSON.parse(aiResponseContent);
     res.status(200).json(aiResponseJson);
   } catch (error) {
-    console.error('❌ Ошибка в функции /api/estimate:', error);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера.' });
+    console.error('❌ Error in /api/estimate function:', error);
+    res.status(500).json({ error: 'Internal server error.' });
   }
 });
 
-// --- 6. ЭКСПОРТ ПРИЛОЖЕНИЯ ---
-// ❗️❗️❗️ САМОЕ ГЛАВНОЕ ИЗМЕНЕНИЕ ❗️❗️❗️
-// Мы не запускаем сервер, а экспортируем `app`, чтобы Vercel мог использовать его как функцию.
-module.exports = app;
+// --- 6. EXPORT THE APP ---
+// Use 'export default' instead of 'module.exports'
+export default app;
