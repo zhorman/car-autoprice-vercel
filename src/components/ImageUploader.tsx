@@ -1,20 +1,36 @@
-// src/components/ImageUploader.jsx
-import { useState } from 'react';
+// src/components/ImageUploader.tsx
+import React, { useState } from 'react';
 
-const ImageUploader = ({ onEstimate }) => {
-  const [image, setImage] = useState(null);
-  const [text, setText] = useState('');
-  const [preview, setPreview] = useState('');
+// 1. Создаём интерфейс, чтобы описать, какие props ожидает компонент.
+// В нашем случае это одна функция `onEstimate`.
+interface ImageUploaderProps {
+  // `onEstimate` — это функция, которая ничего не возвращает (void)
+  // и принимает один аргумент — объект с полями image (тип File) и text (тип string).
+  onEstimate: (data: { image: File; text: string }) => void;
+}
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+// 2. Указываем, что наш компонент является функциональным компонентом React (React.FC)
+// и использует пропсы, описанные в ImageUploaderProps.
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onEstimate }) => {
+  // 3. Добавляем типы для состояний
+  const [image, setImage] = useState<File | null>(null);
+  const [text, setText] = useState<string>('');
+  const [preview, setPreview] = useState<string>('');
+
+  // 4. Добавляем тип для события 'e' в обработчике
+  // React.ChangeEvent для события изменения, HTMLInputElement для элемента <input>
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // TypeScript теперь знает, что у e.target есть свойство files
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       setImage(file);
       setPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = (e) => {
+  // 5. Добавляем тип для события отправки формы
+  // React.FormEvent для события формы, HTMLFormElement для элемента <form>
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!image || !text) {
       alert('Пожалуйста, загрузите изображение и добавьте описание.');

@@ -1,14 +1,29 @@
-// src/App.jsx
+// src/App.tsx
 import { useState } from 'react';
 import './App.css';
 import ImageUploader from './components/ImageUploader';
 
-function App() {
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+// 1. Создаём интерфейс для объекта с результатом
+// Это описывает, какие данные мы ожидаем получить от API.
+interface IResultData {
+  estimatedHours: string | number; // Нормочасы могут быть числом или строкой
+  comment: string;
+}
 
-  const handleEstimate = async ({ image, text }) => {
+function App() {
+  // 2. Указываем тип для состояния result: это либо наш объект, либо null
+  const [result, setResult] = useState<IResultData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+
+  // 3. Указываем типы для параметров функции
+  const handleEstimate = async ({
+    image,
+    text,
+  }: {
+    image: File;
+    text: string;
+  }) => {
     setLoading(true);
     setError('');
     setResult(null);
@@ -18,20 +33,32 @@ function App() {
     formData.append('text', text);
 
     try {
-      // URL вашего будущего бэкенд-сервера
-      const response = await fetch('http://localhost:3002/api/estimate', {
+      // Для деплоя на Vercel/Netlify используем относительный путь
+      const apiUrl = `${import.meta.env.VITE_API_URL || ''}/api/estimate`;
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка сети или сервера.');
+        // Попытаемся прочитать текст ошибки от сервера
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка сети или сервера.');
       }
 
-      const data = await response.json();
+      // Указываем, что полученные данные соответствуют нашему интерфейсу
+      const data: IResultData = await response.json();
       setResult(data);
-    } catch (err) {
-      setError('Не удалось получить оценку. Попробуйте снова.');
+    } catch (err: unknown) {
+      // 4. Типизируем ошибку в блоке catch
+      let errorMessage = 'Не удалось получить оценку. Попробуйте снова.';
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
       console.error(err);
     } finally {
       setLoading(false);
