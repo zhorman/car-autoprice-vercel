@@ -78,7 +78,7 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
           ],
         },
       ],
-      max_tokens: 400,
+      max_completion_tokens: 400,
       response_format: { type: 'json_object' },
     });
 
