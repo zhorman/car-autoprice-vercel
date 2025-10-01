@@ -38,7 +38,7 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
     const imageMimeType = imageFile.mimetype;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
@@ -78,7 +78,7 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
           ],
         },
       ],
-      max_completion_tokens: 400,
+      max_tokens: 400,
       response_format: { type: 'json_object' },
     });
 
