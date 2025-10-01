@@ -38,7 +38,7 @@ app.post('/api/estimate', upload.single('image'), async (req, res) => {
     const imageMimeType = imageFile.mimetype;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'user',
